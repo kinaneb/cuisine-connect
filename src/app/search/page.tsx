@@ -28,11 +28,10 @@ export default function SearchPage() {
     let brief: string;
     const existingRecipes = useRecipes();
 
-
     if (existingRecipes.length !== 0) {
         const recipesNames = existingRecipes.map(recipe => recipe.name);
         const recipesString = recipesNames.join(', ');
-        brief = `Tu es un chef cuisinier qui recommande des recettes de cuisine à des internautes. Voici les noms des recettes déjà stockées en base de données: ${recipesString}. Tu devras en fonction de ces recettes suggérer d\'autres recette à l\'internaute en fonction du texte de recherche et des recettes précédemment mentionnées. Tu renverras un tableau JSON de chaînes de caractères dans lequel tu renverra la liste des recettes qui correspondent à la recherche qui te sera donnée. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON et le tableau ne doit pas être inclu dans aucune propriété, seulement un tableau tout simple de string.`
+        brief = `Tu es un chef cuisinier qui recommande des recettes de cuisine à des internautes. Voici les noms des recettes déjà stockées en base de données: ${recipesString}. Tu devras en fonction de ces recettes suggérer maximum 5 recettes diverses et variées à l\'internaute en fonction du texte de recherche et des recettes précédemment mentionnées. Tu renverras un tableau JSON de chaînes de caractères dans lequel tu renverra la liste des recettes qui correspondent à la recherche qui te sera donnée. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON et le tableau ne doit pas être inclu dans aucune propriété, seulement un tableau tout simple de string.`
     }
 
     const updateSearch: ChangeEventHandler<HTMLInputElement> = useCallback(event => {
@@ -46,7 +45,7 @@ export default function SearchPage() {
         setLoading(true);
         setRecipes([]);
 
-
+        
         fetch('api/search', {
             method: 'POST',
             headers: {
@@ -76,14 +75,16 @@ export default function SearchPage() {
 
     if (loading) {
         return (
-            <Stack spacing={1}>
-                <Typography variant="h4" align="center">
-                    Chargement
-                </Typography>
-                <Typography align="center">
-                    Merci de patienter pendant que nous recherchons des recettes correspondantes à votre recherche...
-                </Typography>
-            </Stack>
+            <div className="relative h-screen w-full bg-[url('/images/loading.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
+                <Stack spacing={1}>
+                    <Typography variant="h4" align="center">
+                        Chargement
+                    </Typography>
+                    <Typography align="center">
+                        Merci de patienter pendant que nous recherchons des recettes correspondantes à votre recherche...
+                    </Typography>
+                </Stack>
+            </div>
         );
     }
 

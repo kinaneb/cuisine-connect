@@ -25,13 +25,14 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+cuisine-connect/.env.local
+.env
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+cuisine-connect/next-env.d.ts
 
 .idea

@@ -1,5 +1,4 @@
 'use client';
-import {useRouter} from "next/navigation";
 import {useRecipe} from "../../../../hooks/useRecipe";
 import {
     Card, CardActions,
@@ -11,7 +10,7 @@ import {
     ListItemIcon,
     ListItemText,
     Stack,
-    Typography
+    Typography, CircularProgress
 } from "@mui/material";
 import Navbar from "@/components/Navbar";
 import ListItem from "@mui/material/ListItem";
@@ -30,13 +29,22 @@ interface SimilarRecipe {
     thumbnailUrl: string
 }
 
+interface ShoppingList {
+    name: string,
+    quantity: string,
+    price: string
+}
+
 export default function Recipe({params}: {params: {recipeId: string}}) {
     const recipe = useRecipe(params.recipeId);
     const [similarsRecipes, setSimilarRecipes] = useState<Array<SimilarRecipe>>([]);
     const [accompanients, setAccompanients] = useState<Array<Accompaniement>>([]);
+    const [shoppingList, setShoppingList] = useState<Array<ShoppingList>>([]);
     const [loading, setLoading] = useState(false);
     const [loadingAccompanients, setLoadingAccompanients] = useState(false);
+    const [loadingShoppingList, setLoadingShoppingList] = useState(false);
     const [displayAccompaniement, setDisplayAccompaniement] = useState(false);
+    const [displayShoppingList, setDisplayShoppingList] = useState(false);
 
     useEffect(() => {
         setLoading(true);
@@ -73,35 +81,66 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
 
     }, [recipe]);
 
-        const targetAccompaniement = () => {
-            let brief: string = `Voici une recette pour laquelle j’aimerai que tu me suggères des accompagnements : . Les accompagnements que j’aimerai que tu me proposes doivent être constitués du nom d'un vin, d’un dessert ainsi qu’un fromage. Chaque proposition devra être unique. Le tableau ne devra contenir que les objets, rien d'autre que les objets. Chaque objet sera constitué d’une clé wine, desert et cheese. Tu me feras 3 propositions. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas wine, dessert ou cheese.`;
+    const targetAccompaniement = () => {
+        let brief: string = `Voici une recette pour laquelle j’aimerai que tu me suggères des accompagnements : . Les accompagnements que j’aimerai que tu me proposes doivent être constitués du nom d'un vin, d’un dessert ainsi qu’un fromage. Chaque proposition devra être unique. Le tableau ne devra contenir que les objets, rien d'autre que les objets. Chaque objet sera constitué d’une clé wine, desert et cheese. Tu me feras 3 propositions. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas wine, dessert ou cheese.`;
+        setLoadingAccompanients(true);
 
-            (async () => {
-                await fetch('/api/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        search: recipe.name,
-                        brief
-                    })
-                }).then(response => {
-                    return response.json();
-                }).then(data => {
-                    console.log(data);
-                    return JSON.parse(data.message.content);
-                }).then(accompanients => {
-                    setAccompanients(accompanients);
-                }).catch(error => {
-                    console.error(error);
-                }).finally(() => {
-                    setDisplayAccompaniement(true)
-                });
+        (async () => {
+            await fetch('/api/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search: recipe.name,
+                    brief
+                })
+            }).then(response => {
+                return response.json();
+            }).then(data => {
+                console.log(data);
+                return JSON.parse(data.message.content);
+            }).then(accompanients => {
+                setAccompanients(accompanients);
+            }).catch(error => {
+                console.error(error);
+            }).finally(() => {
+                setDisplayAccompaniement(true);
+                setLoadingAccompanients(false);
+            });
 
-            })();
-        }
+        })();
+    }
 
+    const targetShoppingList = () => {
+        let brief: string = `Voici une recette pour laquelle j’aimerai que tu me génère une liste de courses. Trois clés devront apparaître au sein du tableau JSON, le nom de l’ingrédient dont la clé sera name, la quantité requise dont la clé sera quantity et une estimation de prix dont la clé sera price.Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON, seulement un tableau tout simple d’objets. Tu supprimeras toutes clés qui ne sont pas name, quantity ou price.`;
+        setLoadingShoppingList(true);
+
+        (async () => {
+            await fetch('/api/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search: recipe.name,
+                    brief
+                })
+            }).then(response => {
+                return response.json();
+            }).then(data => {
+                console.log(data);
+                return JSON.parse(data.message.content);
+            }).then(shoppingList => {
+                setShoppingList(shoppingList);
+            }).catch(error => {
+                console.error(error);
+            }).finally(() => {
+                setDisplayShoppingList(true);
+                setLoadingShoppingList(false);
+            });
+        })();
+    }
 
     if (loading) {
         return (
@@ -126,12 +165,11 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                     <Stack spacing={1}>
                         <div className={'flex justify-around'}>
                             <Typography variant={'h2'} >{recipe?.name}</Typography>
-                            <Button color={'inherit'} variant={'contained'} size={'small'} onClick={targetAccompaniement}>Accompagnements</Button>
                         </div>
                         <Divider light={false}/>
                         <div className={'flex justify-evenly'}>
-                            <div className={'flex-col lg:w-2/4'}>
-                                <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto">
+                            <div className={'flex-col'}>
+                                <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto mx-3">
                                     <Typography variant={'h4'} color={'white'}>Ingrédients</Typography>
                                     <List>
                                         {recipe.ingredients.map(ingredient => (
@@ -146,37 +184,40 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                                         ))}
                                     </List>
                                 </div>
-                                {!displayAccompaniement && (
-                                    <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto">
-                                        <p>Veuillez cliquez sur le bouton Accompagnements pour visualiser les accompagnements suggérés pour cette recette</p>
-                                    </div>
-                                )}
-
-                                {displayAccompaniement && (
-                                    <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto">
-                                        <Typography variant={'h4'} color={'white'}>Accompagnements</Typography>
-                                        <List>
-                                            {accompanients.map(accompanient => (
-                                                <ListItem key={accompanient.wine}>
-                                                    <ListItemIcon>
-                                                        <SoupKitchen/>
-                                                    </ListItemIcon>
-                                                    <ListItemButton>
-                                                        <ListItemText primary={accompanient.wine} />
-                                                    </ListItemButton>
-                                                    <ListItemButton>
-                                                        <ListItemText primary={accompanient.cheese} />
-                                                    </ListItemButton>
-                                                    <ListItemButton>
-                                                        <ListItemText primary={accompanient.dessert} />
-                                                    </ListItemButton>
-                                                </ListItem>
-                                            ))}
-                                        </List>
-                                    </div>
-                                )}
+                                <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto mx-3">
+                                    <Typography variant={'h4'} color={'white'}>Accompagnements</Typography>
+                                    {!displayAccompaniement && (
+                                        <Button color={'inherit'} variant={'contained'} size={'small'} onClick={targetAccompaniement}>Accompagnements</Button>
+                                    )}
+                                    {loadingAccompanients && (
+                                        <CircularProgress size={'1rem'} color={'inherit'}/>
+                                    )}
+                                    {displayAccompaniement && (
+                                        <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md w-full my-auto mx-3">
+                                            <List>
+                                                {accompanients.map(accompanient => (
+                                                    <ListItem key={accompanient.wine}>
+                                                        <ListItemIcon>
+                                                            <SoupKitchen/>
+                                                        </ListItemIcon>
+                                                        <ListItemButton>
+                                                            <ListItemText primary={accompanient.wine} />
+                                                        </ListItemButton>
+                                                        <ListItemButton>
+                                                            <ListItemText primary={accompanient.cheese} />
+                                                        </ListItemButton>
+                                                        <ListItemButton>
+                                                            <ListItemText primary={accompanient.dessert} />
+                                                        </ListItemButton>
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 lg:w-2/5 lg:max-w-5xl rounded-md w-full my-auto">
+                            <div className={'flex-col '}>
+                                <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md my-auto mx-6">
                                 <Typography variant={'h4'} color={'white'}>Préparation</Typography>
                                 <List>
                                     {recipe.steps.map(step => (
@@ -190,6 +231,30 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                                         </ListItem>
                                     ))}
                                 </List>
+                            </div>
+                                <div className="bg-white bg-opacity-70 px-16 py-8 items-center self-center mt-2 rounded-md my-auto mx-6">
+                                    <Typography variant={'h4'} color={'white'}>Liste des courses</Typography>
+                                    {!displayShoppingList && (
+                                        <Button variant={'contained'} color={'inherit'} size={'small'} onClick={targetShoppingList}>Générer la liste de course</Button>
+                                    )}
+                                    {loadingShoppingList && (
+                                        <CircularProgress size={'1rem'} color={'inherit'} />
+                                    )}
+                                    {displayShoppingList && (
+                                        <List>
+                                            {shoppingList.map(item => (
+                                                <ListItem key={item.name}>
+                                                    <ListItemIcon>
+                                                        <ArrowCircleRight/>
+                                                    </ListItemIcon>
+                                                    <ListItemButton>
+                                                        <ListItemText primary={item.name} secondary={`${item.quantity} | ${item.price} `} />
+                                                    </ListItemButton>
+                                                </ListItem>
+                                            ))}
+                                        </List>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </Stack>

@@ -1,7 +1,14 @@
 import {useEffect, useState} from "react";
 
 export function useRecipe(recipeId: string) {
-    const [recipe, setRecipe] = useState({id: '', name: '', ingredients: [], steps: []});
+    const [recipe, setRecipe] = useState({
+        id: '',
+        name: '',
+        ingredients: [""],
+        steps: [""],
+        users: [""],
+        favourites: [""]
+    });
 
     useEffect(() => {
         (async () => {

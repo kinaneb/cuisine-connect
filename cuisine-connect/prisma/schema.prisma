@@ -11,9 +11,20 @@ datasource db {
 }
 
 model Recipe {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   thumbnailUrl String
   steps        String[]
   ingredients  String[]
+  users        String[]
+  favourites   Favourite[]
+}
+
+model Favourite {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId String @db.ObjectId
+
+  @@unique([userId, recipeId], name: "user_recipes")
 }

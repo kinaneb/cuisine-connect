@@ -2,8 +2,6 @@ import {Button} from "@mui/material";
 import {SignedIn, SignedOut, UserButton} from "@clerk/nextjs"
 
 export default function Navbar() {
-  // const {userId} = auth();
-  // console.log("userId", userId);
   return (
     <>
       <nav>
@@ -15,6 +13,8 @@ export default function Navbar() {
               <Button href={'/search'} color={'inherit'} variant={'contained'} className={'mx-2'}>Rechercher
                 des recettes
               </Button>
+            <Button href={'/favourites'} color={'inherit'} variant={'contained'} className={'mx-2'}>Vos Favoris
+            </Button>
               <div className="ml-auto mx-2">
                 < UserButton afterSignOutUrl="/"/>
               </div>

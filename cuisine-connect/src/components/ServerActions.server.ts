@@ -6,6 +6,15 @@ type AddToFavouritesProps = {
   userId: string,
   recipeId: string,
 }
+
+export type AddOrUpdateProps = {
+  userId: string,
+  recipeId: string,
+  newScore: number,
+  ratingSum?: number,
+  ratingCount?: number,
+}
+
 export const addToFavourites = async ({userId, recipeId}: AddToFavouritesProps) => {
   try {
     const alreadyExist = await prismadb.favourite.findUnique({
@@ -32,7 +41,7 @@ export const addToFavourites = async ({userId, recipeId}: AddToFavouritesProps) 
         id: recipeId
       },
       data: {
-        users: {
+        favUsers: {
           push: userId
         }
       }
@@ -60,7 +69,7 @@ export const removeFromFavourites = async ({userId, recipeId}: AddToFavouritesPr
         id: recipeId
       },
       data: {
-        users: deletedFavourite.recipe.users.filter(user => user != deletedFavourite.userId)
+        favUsers: deletedFavourite.recipe.favUsers.filter(user => user != deletedFavourite.userId)
       }
     });
     return deletedFavourite;
@@ -81,5 +90,40 @@ export const getFavourites = async (userId: string) => {
     });
   } catch (error) {
     console.error("getFavourites error: ", error);
+  }
+}
+export async function addOrUpdateRating({userId, recipeId, newScore, ratingSum, ratingCount}: AddOrUpdateProps) {
+  const existingRating = await prismadb.rating.findUnique({
+    where: {
+      user_recipe_rating: { userId, recipeId }
+    }
+  });
+
+  if (existingRating) {
+    console.error(`recipe ${recipeId} has been re rated by user ${userId}`);
+    return (ratingCount == 0 ? 0 : (ratingSum ?? 0)/(ratingCount ?? 1));
+  } else {
+    await prismadb.rating.create({
+      data: {
+        userId,
+        recipeId,
+        score: newScore
+      }
+    });
+
+    const newRatingSum = (ratingSum ?? 0) + newScore;
+    const newRatingCount = (ratingCount ?? 0) + 1;
+    const newAverageRating = newRatingSum/newRatingCount;
+    await prismadb.recipe.update({
+      where: {
+        id: recipeId
+      }, data: {
+        rateUsers: {push: userId},
+        ratingSum: newRatingSum,
+        ratingCount: newRatingCount,
+        averageRating: newAverageRating,
+      }
+    });
+    return newAverageRating;
   }
 }

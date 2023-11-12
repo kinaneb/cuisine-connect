@@ -10,7 +10,7 @@ import {
     ListItemIcon,
     ListItemText,
     Stack,
-    Typography, CircularProgress
+    Typography, CircularProgress, Rating
 } from "@mui/material";
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
@@ -20,7 +20,7 @@ import { ArrowCircleRight, SoupKitchen} from "@mui/icons-material";
 import React, {useEffect, useState} from "react";
 import List from "@mui/material/List";
 import {useUser} from "@clerk/nextjs";
-import {addToFavourites, removeFromFavourites} from "@/components/ServerActions.server";
+import {addToFavourites, removeFromFavourites, addOrUpdateRating} from "@/components/ServerActions.server";
 
 interface Accompaniement {
     wine: string,
@@ -50,21 +50,39 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
     const [displayAccompaniement, setDisplayAccompaniement] = useState(false);
     const [displayShoppingList, setDisplayShoppingList] = useState(false);
     const [isInFavourites, setIsInFavourites] = useState(true);
+    const [isAlreadyRating, setIsAlreadyRating] = useState(true);
+    const [rateValue, setRateValue] = useState(0);
+
   const {user} = useUser();
-  const updateIn = (users: string[]) => {
-    if (user) {
-      setIsInFavourites(users.includes(user?.id))
+  const updateIsInFavourites = (users: string[] | undefined) => {
+    if (users) {
+      const isFavIn = users.includes(user?.id as string);
+      setIsInFavourites(isFavIn)
     } else {
-      console.log("no user updateIn")
+      console.log("no user updateIsInFavourites")
     }
-  }
+  };
+  const updateRateValue = (value: number) => {
+    setRateValue(value);
+  };
+  const updateIsAlreadyRating = (rateUsers: string[] | undefined) => {
+    if (rateUsers) {
+      const isAlready = rateUsers.includes(user?.id as string);
+      setIsAlreadyRating(isAlready);
+    } else {
+      console.log("no user updateIsAlreadyRating")
+    }
+  };
   useEffect(() => {
     setLoading(true);
     // setSimilarRecipes([]);
     if (recipe?.id !== '') {
-      updateIn(recipe.users);
       let brief: string = `Tu es un chef cuisinier qui recommande des recettes de cuisine à des internautes. En fonction de cette recette : ${recipe.name}, tu devras proposer maximum 3 recettes similaires à l\'internaute. Tu renverras un tableau JSON contenant  uniquement des objets. Chaque objet sera constitué d’une clé name, et d’une autre clé thumnailurl. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON et le tableau ne doit pas être inclu dans aucune propriété, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas name ou thumbnailurl.`;
-
+      if(recipe) {
+        updateIsInFavourites(recipe.favUsers);
+        updateIsAlreadyRating(recipe.rateUsers);
+        updateRateValue(recipe.averageRating);
+      }
             (async () => {
                 await fetch('/api/search', {
                     method: 'POST',
@@ -106,6 +124,25 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
       })
 
   }
+  const handelRating = (selectedValue: number | null) => {
+    if (!params.recipeId || !user?.id) {
+      throw new Error("No recipe Selected");
+    }
+    addOrUpdateRating({
+      ratingSum: recipe?.ratingSum,
+      ratingCount: recipe?.ratingCount,
+      recipeId: params.recipeId,
+      userId: user.id,
+      newScore: (selectedValue ?? 0),
+    })
+      .then((value) => {
+        setIsAlreadyRating(true)
+        setRateValue(value);
+      })
+      .catch(error => {
+      console.error(error);
+    })
+  };
   const handelRemoveFromFavourites = () => {
     if (!params.recipeId || !user?.id) {
       throw new Error("No recipe Selected");
@@ -206,15 +243,25 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                             <Typography variant={'h2'} >{recipe?.name}</Typography>
                             <Button color={'inherit'} variant={'contained'} size={'small'}
                                     onClick={targetAccompaniement}>Accompagnements</Button>
-                            {
-                              !isInFavourites
-                              &&
-                                <Button variant={'text'} color={'inherit'} onClick={handelAddToFavourites}><FavoriteBorderOutlinedIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
-                            }
-                            {isInFavourites
-                              &&
-                                <Button variant={'text'} color={'inherit'} onClick={handelRemoveFromFavourites}><FavoriteIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
-                            }
+                          {
+                            recipe &&
+                            !isInFavourites
+                            &&
+                              <Button variant={'text'} color={'inherit'} onClick={handelAddToFavourites}><FavoriteBorderOutlinedIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
+                          }
+                          {recipe &&
+                            isInFavourites
+                            &&
+                              <Button variant={'text'} color={'inherit'} onClick={handelRemoveFromFavourites}><FavoriteIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
+                          }
+                          {
+                            isAlreadyRating &&
+                              <Rating name="disabled" className={"mt-1.5"} precision={0.5} color={"inherit"} value={rateValue} readOnly/>
+                          }
+                          {
+                            !isAlreadyRating &&
+                              <Rating name="simple-controlled" precision={0.5} onChange={(event, SelectedValue) => handelRating(SelectedValue)} value={rateValue}/>
+                          }
                         </div>
                         <Divider light={false}/>
                         <div className={'flex justify-evenly'}>

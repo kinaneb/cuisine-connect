@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {Favourite, Rating} from "../lib/types";
 
 export function useRecipe(recipeId: string) {
     const [recipe, setRecipe] = useState({
@@ -6,8 +7,13 @@ export function useRecipe(recipeId: string) {
         name: '',
         ingredients: [""],
         steps: [""],
-        users: [""],
-        favourites: [""]
+        favUsers: [""],
+        rateUsers: [""],
+        favourites: [""],
+        rating: [""],
+        ratingSum: 0,
+        ratingCount: 0,
+        averageRating: 0,
     });
 
     useEffect(() => {

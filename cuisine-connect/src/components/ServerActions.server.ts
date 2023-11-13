@@ -1,6 +1,8 @@
 'use server'
 
 import prismadb from "../../lib/prismadb";
+import {OpenAI} from "openai";
+import {currentUser} from "@clerk/nextjs";
 
 type AddToFavouritesProps = {
   userId: string,
@@ -126,4 +128,50 @@ export async function addOrUpdateRating({userId, recipeId, newScore, ratingSum, 
     });
     return newAverageRating;
   }
+}
+
+type ChatBotProps = {
+  message: string
+}
+
+const chatBotBrief = "Je suis un chef étoilé au guide Michelin, avec plus de 15 ans d'expérience dans le métier de la gastronomie française. J'ai remporté plusieurs concours culinaires internationaux, ce qui témoigne de ma passion et de mon expertise en cuisine. Ma spécialité est la fusion des saveurs traditionnelles françaises avec des influences modernes. Posez-moi des questions sur la cuisine, les recettes, les techniques culinaires, ou même des conseils pour améliorer vos compétences en cuisine. Je suis ici pour partager mon savoir-faire et ma passion pour la gastronomie."
+export async function getChatBotResponse({message}: ChatBotProps) {
+    try {
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      const user = await currentUser();
+      if(!user) {
+        console.error("not connected");
+        return '';
+      }
+      const aiCompletions = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: chatBotBrief,
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ]
+      });
+
+      const chatBotResponse = aiCompletions.choices[0].message.content?.trim();
+      console.log("chatBotResponse: ", chatBotResponse);
+      // Store the message and response in the database
+      await prismadb.chatMessage.create({
+        data: {
+          userId: user.id,
+          message: message,
+          response: chatBotResponse
+        },
+      });
+      return (chatBotResponse ?? '');
+    } catch (error) {
+       return 'Error processing chat message' ;
+    }
+
 }

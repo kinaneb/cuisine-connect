@@ -1,5 +1,7 @@
 import {Button} from "@mui/material";
 import {SignedIn, SignedOut, UserButton} from "@clerk/nextjs"
+import ChatBot from "@/components/ChatBot";
+import React from "react";
 
 export default function Navbar() {
   return (
@@ -18,6 +20,8 @@ export default function Navbar() {
               <div className="ml-auto mx-2">
                 < UserButton afterSignOutUrl="/"/>
               </div>
+
+            <ChatBot />
             </SignedIn>
               <SignedOut>
                 <div className="flex items-end ml-auto">

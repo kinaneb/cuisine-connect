@@ -5,6 +5,7 @@ import { currentUser } from "@clerk/nextjs";
 import {getFavourites, removeFromFavourites} from "@/components/ServerActions.server";
 import FavouriteRecipe from "@/components/FavouriteRecipe";
 import Navbar from "@/components/Navbar";
+import ChatBot from "@/components/ChatBot";
 
 export default async function Favourites() {
   const user = await currentUser();
@@ -24,10 +25,11 @@ export default async function Favourites() {
             Vos Favoris
           </Typography>
           <Grid container spacing={2}>
-            {favourites.length > 0 ?
+            {favourites &&
+              favourites.length > 0 ?
               favourites.map((favourite) => {
                 return (
-                  <FavouriteRecipe favourite={favourite}></FavouriteRecipe>
+                  <FavouriteRecipe recipe={favourite.recipe}></FavouriteRecipe>
                 )
               }) :
               (<Typography align="center" color={'white'}>

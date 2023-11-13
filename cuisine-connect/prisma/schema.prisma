@@ -43,3 +43,13 @@ model Rating {
 
   @@unique([userId, recipeId], name: "user_recipe_rating")
 }
+
+model ChatMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  message   String
+  response  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

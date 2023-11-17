@@ -241,8 +241,7 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                     <Stack spacing={1}>
                         <div className={'flex justify-around'}>
                             <Typography variant={'h2'} >{recipe?.name}</Typography>
-                            <Button color={'inherit'} variant={'contained'} size={'small'}
-                                    onClick={targetAccompaniement}>Accompagnements</Button>
+                      <div  className="bg-white flex w-fit bg-opacity-70 rounded-md self-end">
                           {
                             recipe &&
                             !isInFavourites
@@ -262,6 +261,8 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                             !isAlreadyRating &&
                               <Rating name="simple-controlled" precision={0.5} onChange={(event, SelectedValue) => handelRating(SelectedValue)} value={rateValue}/>
                           }
+
+                      </div>
                         </div>
                         <Divider light={false}/>
                         <div className={'flex justify-evenly'}>
@@ -339,7 +340,7 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                                     )}
                                     {displayShoppingList && (
                                         <List>
-                                            {shoppingList.map(item => (
+                                            {shoppingList?.map(item => (
                                                 <ListItem key={item.name}>
                                                     <ListItemIcon>
                                                         <ArrowCircleRight/>

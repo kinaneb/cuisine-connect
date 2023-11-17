@@ -8,7 +8,7 @@ export default function Navbar() {
     <>
       <nav>
         <div className={'flex py-2'}>
-          <Button href={'/'} color={'inherit'} variant={'contained'} className={'mx-2'}>Accueil</Button>
+            <Button href={'/'} color={'inherit'} variant={'contained'} className={'mx-2'}>Accueil</Button>
           <SignedIn>
               <Button href={'/recipes'} color={'inherit'} variant={'contained'} className={'mx-2'}>Nos
                 recettes</Button>

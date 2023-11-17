@@ -1,6 +1,6 @@
 "use client"
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import React, {Suspense, useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {Button, IconButton} from "@mui/material";
 import {getChatBotResponse} from "@/components/ServerActions.server";
 
@@ -33,10 +33,6 @@ export default function ChatBot () {
         setUserInput(e.target.value);
         e.target.value = '';
     };
-    // const handleSendMessage = (e: React.FormEvent<HTMLFormElement>): void => {
-    //     e.preventDefault();
-    //     sendMessage(userInput);
-    // };
     useEffect(() => {
         bottomOfChat.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -48,9 +44,9 @@ export default function ChatBot () {
     const handelOpenChat = () => {
         setChatDisplay(chatDisplay == "none" ? "block" : "none")
     }
-    function WaitingResponse() {
-        return <h2>🌀 waiting...</h2>;
-    }
+    // const WaitingResponse = () => {
+    //     return <h2>🌀 waiting...</h2>;
+    // }
     return (
         <div id="chatWindow" className={'fixed flex items-end bottom-20 right-20 z-50'} >
             <div id="chatWindow" className={'flex flex-col items-end w-80 h-96 bg-white bg-opacity-70 rounded-2xl pt-4'} style={{

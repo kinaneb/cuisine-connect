@@ -1,6 +1,8 @@
 import {z} from "zod";
 import OpenAI from "openai";
 import {NextResponse} from "next/server";
+import {getUserProfileDetails} from "@/components/ServerActions.server";
+import {currentUser} from "@clerk/nextjs";
 
 const postSchema = z.object({
     search: z.string(),
@@ -9,7 +11,12 @@ const postSchema = z.object({
 
 export async function POST(request: Request) {
     const body = await request.json();
-
+    const user = await currentUser();
+    if(!user) {
+        throw new Error("no user");
+    }
+    const userProfileDetails = await getUserProfileDetails(user.id);
+    // console.log("userProfileDetails", userProfileDetails);
     const { search, brief } = postSchema.parse(body);
 
     const openai = new OpenAI({
@@ -21,7 +28,7 @@ export async function POST(request: Request) {
         messages: [
             {
                 role: "system",
-                content: brief
+                content: brief + userProfileDetails
             },
             {
                 role: "user",

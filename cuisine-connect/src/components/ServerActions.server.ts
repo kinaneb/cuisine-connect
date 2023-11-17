@@ -3,6 +3,7 @@
 import prismadb from "../../lib/prismadb";
 import {OpenAI} from "openai";
 import {currentUser} from "@clerk/nextjs";
+import {recipes} from "../../prisma/recipes";
 
 type AddToFavouritesProps = {
   userId: string,
@@ -173,5 +174,36 @@ export async function getChatBotResponse({message}: ChatBotProps) {
     } catch (error) {
        return 'Error processing chat message' ;
     }
+}
 
+export async function getUserProfileDetails(userId: string) {
+  // const userFavourites =
+
+
+  return `this client add this list of recipes to his favourites: ${await getUserFavouritesRecipes(userId)} and rate these recipe ${await getUserRatingRecipes(userId)}`
+
+}
+
+async function getUserFavouritesRecipes(userId: string) {
+  const userFavourites = await prismadb.favourite.findMany({
+    where: {
+      userId: userId
+    },
+    include: {
+      recipe: true
+    }
+  });
+  return userFavourites.map((favorite) => favorite.recipe.name);
+}
+
+async function getUserRatingRecipes(userId: string) {
+  const userRating = await prismadb.rating.findMany({
+    where: {
+      userId: userId
+    },
+    include: {
+      recipe: true
+    }
+  });
+  return userRating.map((rating) => `recipe: ${rating.recipe.name}, rate score: ${rating.score}`)
 }

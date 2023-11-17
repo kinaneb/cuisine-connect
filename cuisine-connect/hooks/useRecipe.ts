@@ -1,5 +1,4 @@
 import {useEffect, useState} from "react";
-import {Favourite, Rating} from "../lib/types";
 
 export function useRecipe(recipeId: string) {
     const [recipe, setRecipe] = useState({

@@ -27,6 +27,21 @@ services:
       - my_network
 
   # Add more containers below (nginx, postgres, etc.)
+  cuisine-connect-db:
+    container_name: cuisine-connect-db
+    build:
+      context: .
+      dockerfile: mongodb.dev.Dockerfile
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_REPLICA_HOST: cuisine-connect-db
+      MONGO_REPLICA_PORT: "27017"
+    ports:
+      - 27017:27017
+    networks:
+      - my_network
 
 # Define a network, which allows containers to communicate
 # with each other, by using their container name as a hostname

@@ -11,9 +11,45 @@ datasource db {
 }
 
 model Recipe {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  thumbnailUrl String
-  steps        String[]
-  ingredients  String[]
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  thumbnailUrl  String
+  steps         String[]
+  ingredients   String[]
+  favUsers      String[]
+  rateUsers     String[]
+  favourites    Favourite[]
+  rating        Rating[]
+  ratingSum     Int         @default(0)
+  ratingCount   Int         @default(0)
+  averageRating Float       @default(0)
+}
+
+model Favourite {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId String @db.ObjectId
+
+  @@unique([userId, recipeId], name: "user_recipes")
+}
+
+model Rating {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
+  score    Int
+  recipeId String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId], name: "user_recipe_rating")
+}
+
+model ChatMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  message   String
+  response  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

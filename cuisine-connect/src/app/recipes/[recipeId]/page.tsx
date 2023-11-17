@@ -10,13 +10,17 @@ import {
     ListItemIcon,
     ListItemText,
     Stack,
-    Typography, CircularProgress
+    Typography, CircularProgress, Rating
 } from "@mui/material";
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 import Navbar from "@/components/Navbar";
 import ListItem from "@mui/material/ListItem";
 import { ArrowCircleRight, SoupKitchen} from "@mui/icons-material";
 import React, {useEffect, useState} from "react";
 import List from "@mui/material/List";
+import {useUser} from "@clerk/nextjs";
+import {addToFavourites, removeFromFavourites, addOrUpdateRating} from "@/components/ServerActions.server";
 
 interface Accompaniement {
     wine: string,
@@ -45,15 +49,40 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
     const [loadingShoppingList, setLoadingShoppingList] = useState(false);
     const [displayAccompaniement, setDisplayAccompaniement] = useState(false);
     const [displayShoppingList, setDisplayShoppingList] = useState(false);
+    const [isInFavourites, setIsInFavourites] = useState(true);
+    const [isAlreadyRating, setIsAlreadyRating] = useState(true);
+    const [rateValue, setRateValue] = useState(0);
 
-    useEffect(() => {
-        setLoading(true);
-        // setSimilarRecipes([]);
-
-        if (recipe.id !== '') {
-
-            let brief: string = `Tu es un chef cuisinier qui recommande des recettes de cuisine à des internautes. En fonction de cette recette : ${recipe.name}, tu devras proposer maximum 3 recettes similaires à l\'internaute. Tu renverras un tableau JSON contenant  uniquement des objets. Chaque objet sera constitué d’une clé name, et d’une autre clé thumnailurl. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON et le tableau ne doit pas être inclu dans aucune propriété, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas name ou thumbnailurl.`;
-
+  const {user} = useUser();
+  const updateIsInFavourites = (users: string[] | undefined) => {
+    if (users) {
+      const isFavIn = users.includes(user?.id as string);
+      setIsInFavourites(isFavIn)
+    } else {
+      console.log("no user updateIsInFavourites")
+    }
+  };
+  const updateRateValue = (value: number) => {
+    setRateValue(value);
+  };
+  const updateIsAlreadyRating = (rateUsers: string[] | undefined) => {
+    if (rateUsers) {
+      const isAlready = rateUsers.includes(user?.id as string);
+      setIsAlreadyRating(isAlready);
+    } else {
+      console.log("no user updateIsAlreadyRating")
+    }
+  };
+  useEffect(() => {
+    setLoading(true);
+    // setSimilarRecipes([]);
+    if (recipe?.id !== '') {
+      let brief: string = `Tu es un chef cuisinier qui recommande des recettes de cuisine à des internautes. En fonction de cette recette : ${recipe.name}, tu devras proposer maximum 3 recettes similaires à l\'internaute. Tu renverras un tableau JSON contenant  uniquement des objets. Chaque objet sera constitué d’une clé name, et d’une autre clé thumnailurl. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON et le tableau ne doit pas être inclu dans aucune propriété, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas name ou thumbnailurl.`;
+      if(recipe) {
+        updateIsInFavourites(recipe.favUsers);
+        updateIsAlreadyRating(recipe.rateUsers);
+        updateRateValue(recipe.averageRating);
+      }
             (async () => {
                 await fetch('/api/search', {
                     method: 'POST',
@@ -80,6 +109,53 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
         }
 
     }, [recipe]);
+
+  const handelAddToFavourites = () => {
+    if (!params.recipeId || !user?.id) {
+      throw new Error("No recipe Selected");
+    }
+    addToFavourites({
+      recipeId: params.recipeId,
+      userId: user.id
+    })
+      .then(() => setIsInFavourites(true))
+      .catch(error => {
+        console.error(error);
+      })
+
+  }
+  const handelRating = (selectedValue: number | null) => {
+    if (!params.recipeId || !user?.id) {
+      throw new Error("No recipe Selected");
+    }
+    addOrUpdateRating({
+      ratingSum: recipe?.ratingSum,
+      ratingCount: recipe?.ratingCount,
+      recipeId: params.recipeId,
+      userId: user.id,
+      newScore: (selectedValue ?? 0),
+    })
+      .then((value) => {
+        setIsAlreadyRating(true)
+        setRateValue(value);
+      })
+      .catch(error => {
+      console.error(error);
+    })
+  };
+  const handelRemoveFromFavourites = () => {
+    if (!params.recipeId || !user?.id) {
+      throw new Error("No recipe Selected");
+    }
+    removeFromFavourites({
+      recipeId: params.recipeId,
+      userId: user.id
+    })
+      .then(() => setIsInFavourites(false))
+      .catch(error => {
+        console.error(error);
+      })
+  }
 
     const targetAccompaniement = () => {
         let brief: string = `Voici une recette pour laquelle j’aimerai que tu me suggères des accompagnements : . Les accompagnements que j’aimerai que tu me proposes doivent être constitués du nom d'un vin, d’un dessert ainsi qu’un fromage. Chaque proposition devra être unique. Le tableau ne devra contenir que les objets, rien d'autre que les objets. Chaque objet sera constitué d’une clé wine, desert et cheese. Tu me feras 3 propositions. Tu ne dois rien renvoyer d\'autre que du JSON, pas de texte avant ou après pas de bonjour ni rien du tout d\'autre que du JSON, seulement un tableau tout simple d’objets. Tu supprimeras toutes clé qui ne sont pas wine, dessert ou cheese.`;
@@ -165,6 +241,27 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
                     <Stack spacing={1}>
                         <div className={'flex justify-around'}>
                             <Typography variant={'h2'} >{recipe?.name}</Typography>
+                            <Button color={'inherit'} variant={'contained'} size={'small'}
+                                    onClick={targetAccompaniement}>Accompagnements</Button>
+                          {
+                            recipe &&
+                            !isInFavourites
+                            &&
+                              <Button variant={'text'} color={'inherit'} onClick={handelAddToFavourites}><FavoriteBorderOutlinedIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
+                          }
+                          {recipe &&
+                            isInFavourites
+                            &&
+                              <Button variant={'text'} color={'inherit'} onClick={handelRemoveFromFavourites}><FavoriteIcon style={{color: 'gray'}} fontSize="medium" /> </Button>
+                          }
+                          {
+                            isAlreadyRating &&
+                              <Rating name="disabled" className={"mt-1.5"} precision={0.5} color={"inherit"} value={rateValue} readOnly/>
+                          }
+                          {
+                            !isAlreadyRating &&
+                              <Rating name="simple-controlled" precision={0.5} onChange={(event, SelectedValue) => handelRating(SelectedValue)} value={rateValue}/>
+                          }
                         </div>
                         <Divider light={false}/>
                         <div className={'flex justify-evenly'}>

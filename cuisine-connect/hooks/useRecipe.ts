@@ -1,7 +1,20 @@
 import {useEffect, useState} from "react";
+import {Favourite, Rating} from "../lib/types";
 
 export function useRecipe(recipeId: string) {
-    const [recipe, setRecipe] = useState({id: '', name: '', ingredients: [], steps: []});
+    const [recipe, setRecipe] = useState({
+        id: '',
+        name: '',
+        ingredients: [""],
+        steps: [""],
+        favUsers: [""],
+        rateUsers: [""],
+        favourites: [""],
+        rating: [""],
+        ratingSum: 0,
+        ratingCount: 0,
+        averageRating: 0,
+    });
 
     useEffect(() => {
         (async () => {

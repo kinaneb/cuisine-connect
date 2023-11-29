@@ -59,7 +59,7 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
       const isFavIn = users.includes(user?.id as string);
       setIsInFavourites(isFavIn)
     } else {
-      console.log("no user updateIsInFavourites")
+      console.error("no user updateIsInFavourites")
     }
   };
   const updateRateValue = (value: number) => {
@@ -70,7 +70,7 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
       const isAlready = rateUsers.includes(user?.id as string);
       setIsAlreadyRating(isAlready);
     } else {
-      console.log("no user updateIsAlreadyRating")
+      console.error("no user updateIsAlreadyRating")
     }
   };
   useEffect(() => {
@@ -121,8 +121,9 @@ export default function Recipe({params}: {params: {recipeId: string}}) {
       .then(() => setIsInFavourites(true))
       .catch(error => {
         console.error(error);
-      })
+      });
 
+    () => setIsInFavourites(true);
   }
   const handelRating = (selectedValue: number | null) => {
     if (!params.recipeId || !user?.id) {

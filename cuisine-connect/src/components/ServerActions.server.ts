@@ -177,7 +177,7 @@ type ChatBotProps = {
   message: string
 }
 
-const chatBotBrief = "Je suis un chef étoilé au guide Michelin, avec plus de 15 ans d'expérience dans le métier de la gastronomie française. J'ai remporté plusieurs concours culinaires internationaux, ce qui témoigne de ma passion et de mon expertise en cuisine. Ma spécialité est la fusion des saveurs traditionnelles françaises avec des influences modernes. Posez-moi des questions sur la cuisine, les recettes, les techniques culinaires, ou même des conseils pour améliorer vos compétences en cuisine. Je suis ici pour partager mon savoir-faire et ma passion pour la gastronomie."
+const chatBotBrief = "t'es un chef étoilé au guide Michelin, avec plus de 15 ans d'expérience dans le métier de la gastronomie française. t'as remporté plusieurs concours culinaires internationaux, ce qui témoigne de ma passion et de mon expertise en cuisine. Ton spécialité est la fusion des saveurs traditionnelles françaises avec des influences modernes. Les client peuvent te poser des questions sur la cuisine, les recettes, les techniques culinaires, ou même des conseils pour améliorer vos compétences en cuisine. t'es ici pour partager ton savoir-faire et ma passion pour la gastronomie. Avant de donner un conseil, te demande au client s'il a une allergie alimentaire et  t'évitez ces éléments, te ne faite pas d'opinion personnelle, et t`évite toute question qui n'est pas liée à l'alimentation et à la cuisine."
 export async function getChatBotResponse({message}: ChatBotProps) {
   try {
     const openai = new OpenAI({
@@ -203,7 +203,7 @@ export async function getChatBotResponse({message}: ChatBotProps) {
     });
 
     const chatBotResponse = aiCompletions.choices[0].message.content?.trim();
-    console.log("chatBotResponse: ", chatBotResponse);
+    // console.log("chatBotResponse: ", chatBotResponse);
     // Store the message and response in the database
     await prismadb.chatMessage.create({
       data: {
@@ -222,7 +222,7 @@ export async function getUserProfileDetails(userId: string) {
   // const userFavourites =
 
 
-  return `this client add this list of recipes to his favourites: ${await getUserFavouritesRecipes(userId)} and rate these recipe ${await getUserRatingRecipes(userId)}`
+  return `ce client ajoute cette liste de recettes à ses favoris: ${await getUserFavouritesRecipes(userId)} et évalue ces recettes comme dans cette liste ${await getUserRatingRecipes(userId)}, tu doit prendre cette information en compte dans tes proposition`
 
 }
 
@@ -251,6 +251,16 @@ async function getUserRatingRecipes(userId: string) {
 }
 
 async function addNewRecipe(recipe: generatedRecipe) {
+  const isRecipeExist = await prismadb.recipe.findUnique({
+    where: {
+      name: recipe.name
+    }
+  });
+  if (isRecipeExist) {
+    console.error(`recipe ${recipe.name} already exist`);
+    return isRecipeExist;
+  }
+
   const newRecipe = await prismadb.recipe.create({
     data: {
       name: recipe.name,
@@ -264,7 +274,7 @@ async function addNewRecipe(recipe: generatedRecipe) {
       averageRating: 0
     }
   });
-  console.log("newAddedRecipe: ", newRecipe);
+  // console.log("newAddedRecipe: ", newRecipe);
   return newRecipe;
 }
 
@@ -275,7 +285,7 @@ thumbnailUrl: en tant que chaîne de caractères un lien fonctionnelle vers une 
 steps : en tant que liste de chaîne de caractères les étapes de la préparation de cette recette,
 ingredients : en tant que liste chaîne de caractères les ingrédients de cette recette,
 Vous retournerez un object JSON avec exactement le cles suivent name, thumbnailUrl, steps. Vous ne devez pas renvoyer autre chose que du JSON, pas de texte avant ou après, pas de bonjour ou autre chose que du JSON, et le tableau ne doit être inclus dans aucune propriété, juste un simple tableau de chaînes de caractères.`
-  console.log("recipeName: ", recipeName);
+  // console.log("recipeName: ", recipeName);
   try {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
@@ -296,12 +306,10 @@ Vous retournerez un object JSON avec exactement le cles suivent name, thumbnailU
     });
 
     const message= completions.choices[0].message.content?.trim() ?? '';
-    console.log("message: ", message);
     const generatedRecipe = JSON.parse(message);
-    console.log("generatedRecipe: ", generatedRecipe);
+    // console.log("generatedRecipe: ", generatedRecipe);
     const newRecipe = generatedRecipeSchema.parse(generatedRecipe);
     const newAddedRecipe = await addNewRecipe(newRecipe);
-    console.log("newAddedRecipeId: ", newAddedRecipe.id);
     return newAddedRecipe.id;
   } catch (error) {
     console.error(error);

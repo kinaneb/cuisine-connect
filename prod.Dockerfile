@@ -38,7 +38,7 @@ ENV NEXT_PUBLIC_ENV_VARIABLE=${NEXT_PUBLIC_ENV_VARIABLE}
 # Build Next.js based on the preferred package manager
 RUN \
   if [ -f yarn.lock ]; then yarn build; \
-  elif [ -f package-lock.json ]; then npm run build; \
+  elif [ -f package-lock.json ]; then npm run prismaInit && npm run build; \
   elif [ -f pnpm-lock.yaml ]; then pnpm build; \
   else yarn build; \
   fi

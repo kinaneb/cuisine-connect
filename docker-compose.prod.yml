@@ -2,7 +2,6 @@ version: '3'
 
 services:
   cuisine-connect:
-    container_name: cuisine-connect
     build:
       context: .
       dockerfile: prod.Dockerfile
@@ -10,8 +9,25 @@ services:
         ENV_VARIABLE: ${ENV_VARIABLE}
         NEXT_PUBLIC_ENV_VARIABLE: ${NEXT_PUBLIC_ENV_VARIABLE}
     restart: always
+    env_file:
+      - ./cuisine-connect/.env.local
     ports:
       - 3000:3000
+    networks:
+      - my_network
+
+  cuisine-connect-db:
+    build:
+      context: .
+      dockerfile: mongodb.dev.Dockerfile
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_REPLICA_HOST: cuisine-connect-db
+      MONGO_REPLICA_PORT: "27017"
+    ports:
+      - 27017:27017
     networks:
       - my_network
 

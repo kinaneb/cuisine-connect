@@ -3,7 +3,42 @@
 import prismadb from "../../lib/prismadb";
 import {OpenAI} from "openai";
 import {currentUser} from "@clerk/nextjs";
-import {recipes} from "../../prisma/recipes";
+import {NextResponse} from "next/server";
+import {z} from "zod";
+
+type Favourite = {
+  recipe:
+    {
+      id: string,
+      name: string,
+      thumbnailUrl: string,
+      steps: string[],
+      ingredients: string[],
+      favUsers: string[],
+      rateUsers: string[],
+      ratingSum: number,
+      ratingCount: number,
+      averageRating: number
+    }
+};
+
+
+type Rating =  {
+  score: number,
+  recipe:
+    {
+      id: string,
+      name: string,
+      thumbnailUrl: string,
+      steps: string[],
+      ingredients: string[],
+      favUsers: string[],
+      rateUsers: string[],
+      ratingSum: number,
+      ratingCount: number,
+      averageRating: number
+    }
+}
 
 type AddToFavouritesProps = {
   userId: string,
@@ -17,6 +52,15 @@ export type AddOrUpdateProps = {
   ratingSum?: number,
   ratingCount?: number,
 }
+
+const generatedRecipeSchema = z.object({
+  name: z.string(),
+  thumbnailUrl: z.string().url(),
+  steps: z.string().array(),
+  ingredients: z.string().array(),
+});
+
+type generatedRecipe = z.infer<typeof generatedRecipeSchema>;
 
 export const addToFavourites = async ({userId, recipeId}: AddToFavouritesProps) => {
   try {
@@ -67,12 +111,13 @@ export const removeFromFavourites = async ({userId, recipeId}: AddToFavouritesPr
         recipe: true
       }
     });
+    const updatedFavUsers: string[] = deletedFavourite.recipe.favUsers.filter((user:string) => user != deletedFavourite.userId);
     const updatedRecipe = await prismadb.recipe.update({
       where: {
         id: recipeId
       },
       data: {
-        favUsers: deletedFavourite.recipe.favUsers.filter(user => user != deletedFavourite.userId)
+        favUsers: updatedFavUsers
       }
     });
     return deletedFavourite;
@@ -81,19 +126,16 @@ export const removeFromFavourites = async ({userId, recipeId}: AddToFavouritesPr
   }
 }
 
-export const getFavourites = async (userId: string) => {
-  try {
-    return await prismadb.favourite.findMany({
-      where: {
-        userId: userId
-      },
-      include: {
-        recipe: true
-      }
-    });
-  } catch (error) {
-    console.error("getFavourites error: ", error);
-  }
+export async function getFavourites(userId: string):Promise <Favourite[]> {
+  const favourites = await prismadb.favourite.findMany({
+    where: {
+      userId: userId
+    },
+    include: {
+      recipe: true
+    }
+  });
+  return favourites;
 }
 export async function addOrUpdateRating({userId, recipeId, newScore, ratingSum, ratingCount}: AddOrUpdateProps) {
   const existingRating = await prismadb.rating.findUnique({
@@ -137,43 +179,43 @@ type ChatBotProps = {
 
 const chatBotBrief = "Je suis un chef étoilé au guide Michelin, avec plus de 15 ans d'expérience dans le métier de la gastronomie française. J'ai remporté plusieurs concours culinaires internationaux, ce qui témoigne de ma passion et de mon expertise en cuisine. Ma spécialité est la fusion des saveurs traditionnelles françaises avec des influences modernes. Posez-moi des questions sur la cuisine, les recettes, les techniques culinaires, ou même des conseils pour améliorer vos compétences en cuisine. Je suis ici pour partager mon savoir-faire et ma passion pour la gastronomie."
 export async function getChatBotResponse({message}: ChatBotProps) {
-    try {
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      });
-      const user = await currentUser();
-      if(!user) {
-        console.error("not connected");
-        return '';
-      }
-      const aiCompletions = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: chatBotBrief,
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
-      });
-
-      const chatBotResponse = aiCompletions.choices[0].message.content?.trim();
-      console.log("chatBotResponse: ", chatBotResponse);
-      // Store the message and response in the database
-      await prismadb.chatMessage.create({
-        data: {
-          userId: user.id,
-          message: message,
-          response: chatBotResponse
-        },
-      });
-      return (chatBotResponse ?? '');
-    } catch (error) {
-       return 'Error processing chat message' ;
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+    const user = await currentUser();
+    if(!user) {
+      console.error("not connected");
+      return '';
     }
+    const aiCompletions = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: chatBotBrief,
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ]
+    });
+
+    const chatBotResponse = aiCompletions.choices[0].message.content?.trim();
+    console.log("chatBotResponse: ", chatBotResponse);
+    // Store the message and response in the database
+    await prismadb.chatMessage.create({
+      data: {
+        userId: user.id,
+        message: message,
+        response: chatBotResponse
+      },
+    });
+    return (chatBotResponse ?? '');
+  } catch (error) {
+    return 'Error processing chat message' ;
+  }
 }
 
 export async function getUserProfileDetails(userId: string) {
@@ -193,7 +235,7 @@ async function getUserFavouritesRecipes(userId: string) {
       recipe: true
     }
   });
-  return userFavourites.map((favorite) => favorite.recipe.name);
+  return userFavourites.map((favorite : Favourite) => favorite.recipe.name);
 }
 
 async function getUserRatingRecipes(userId: string) {
@@ -205,5 +247,63 @@ async function getUserRatingRecipes(userId: string) {
       recipe: true
     }
   });
-  return userRating.map((rating) => `recipe: ${rating.recipe.name}, rate score: ${rating.score}`)
+  return userRating.map((rating: Rating) => `recipe: ${rating.recipe.name}, rate score: ${rating.score}`)
+}
+
+async function addNewRecipe(recipe: generatedRecipe) {
+  const newRecipe = await prismadb.recipe.create({
+    data: {
+      name: recipe.name,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1591985666643-1ecc67616216?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2487&q=80',
+      steps: recipe.steps,
+      ingredients: recipe.ingredients,
+      favUsers: [],
+      rateUsers: [],
+      ratingSum: 0,
+      ratingCount: 0,
+      averageRating: 0
+    }
+  });
+  console.log("newAddedRecipe: ", newRecipe);
+  return newRecipe;
+}
+
+export async function generateRecipe(recipeName: string) {
+  const brief = `Vous êtes un chef cuisinier qui dans l'indication des détails de la recette. En fonction du texte de recherche qui contient un nom de recette, vous devrez suggérer ce détail :
+name: en tant que chaîne de caractères e nom de cette recette sous forme de chaîne de caractères,
+thumbnailUrl: en tant que chaîne de caractères un lien fonctionnelle vers une thumbnail de cette recette,
+steps : en tant que liste de chaîne de caractères les étapes de la préparation de cette recette,
+ingredients : en tant que liste chaîne de caractères les ingrédients de cette recette,
+Vous retournerez un object JSON avec exactement le cles suivent name, thumbnailUrl, steps. Vous ne devez pas renvoyer autre chose que du JSON, pas de texte avant ou après, pas de bonjour ou autre chose que du JSON, et le tableau ne doit être inclus dans aucune propriété, juste un simple tableau de chaînes de caractères.`
+  console.log("recipeName: ", recipeName);
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    const completions = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: brief,
+        },
+        {
+          role: "user",
+          content: recipeName
+        }
+      ]
+    });
+
+    const message= completions.choices[0].message.content?.trim() ?? '';
+    console.log("message: ", message);
+    const generatedRecipe = JSON.parse(message);
+    console.log("generatedRecipe: ", generatedRecipe);
+    const newRecipe = generatedRecipeSchema.parse(generatedRecipe);
+    const newAddedRecipe = await addNewRecipe(newRecipe);
+    console.log("newAddedRecipeId: ", newAddedRecipe.id);
+    return newAddedRecipe.id;
+  } catch (error) {
+    console.error(error);
+  }
 }

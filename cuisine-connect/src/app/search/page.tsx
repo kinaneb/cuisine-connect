@@ -8,7 +8,10 @@ import ListItem from "@mui/material/ListItem";
 import {z} from "zod";
 import {SoupKitchen} from "@mui/icons-material";
 import Navbar from "@/components/Navbar";
-
+import {generateRecipe} from "@/components/ServerActions.server";
+import {useRouter} from 'next/navigation';
+// import { useEffect } from 'react';
+// import { useRouter } from 'next/router';
 
 const schema = z.object({
     message: z.object({
@@ -19,11 +22,36 @@ const schema = z.object({
 
 const recipesSchema = z.array(z.string());
 
+
+
 export default function SearchPage() {
     const searchRef = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState("");
     const [recipes, setRecipes] = useState<Array<string>>([]);
     const [loading, setLoading] = useState(false);
+    const Router = useRouter();
+    const [recipeId, setRecipeId] = useState("");
+    const updateRecipeId = (recipeId: string | undefined) => {
+        if(recipeId === undefined) return;
+        setLoading(true);
+        setRecipeId(recipeId);
+        setLoading(false);
+    }
+    const handleRecipe = async (recipe: string) => {
+        console.log(recipe);
+        const recipeId = await generateRecipe(recipe);
+
+        updateRecipeId(recipeId);
+
+        Router.push(`/recipes/${recipeId}`);
+        // useEffect(() => {
+        //     const Router = useRouter();
+        //     Router.push({
+        //         pathname: `/recipes/${recipeId}`,
+        //         query: {recipeId: recipeId}
+        //     });
+        // }, [recipeId]);
+    }
 
     let brief: string;
     const existingRecipes = useRecipes();
@@ -111,13 +139,13 @@ export default function SearchPage() {
                                     </div>
                                     <List>
                                         {recipes.map(recipe => (
-                                            <div key={recipe} className={'bg-white'}>
-                                                <ListItem key={recipe}>
+                                            <div key={`div-${recipe}`} className={'bg-white'}>
+                                                <ListItem key={`list-${recipe}`}>
                                                     <ListItemIcon>
                                                         <SoupKitchen/>
                                                     </ListItemIcon>
                                                     <ListItemButton>
-                                                        <ListItemText primary={recipe} secondary="En savoir plus" />
+                                                        <ListItemText onClick={() => handleRecipe(recipe)} primary={recipe} secondary="En savoir plus" />
                                                     </ListItemButton>
                                                 </ListItem>
                                             </div>

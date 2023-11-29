@@ -1,15 +1,19 @@
 "use client"
 import {Button, Card, CardActions, CardMedia, Grid, Typography} from "@mui/material";
-import {Recipe} from ".prisma/client";
-//
-// type Recipe = {
-//   id: string,
-//   name: string,
-//   thumbnailUrl: string,
-//   steps: string[],
-//   users: string[]
-//   ingredients: string[],
-// }
+
+type Recipe = {
+  id: string,
+  name: string,
+  thumbnailUrl: string,
+  steps: string[],
+  ingredients: string[],
+  favUsers: string[],
+  rateUsers: string[],
+  ratingSum: number,
+  ratingCount: number,
+  averageRating: number
+}
+
 
 type PropsFavouriteRecipe = {
   recipe: Recipe

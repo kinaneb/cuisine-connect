@@ -14,7 +14,7 @@ export default function Home() {
                             Bienvenue sur notre site de recette !
                         </Typography>
                         <Typography align={'center'}>
-                            C'est par ici que ça se passe :)
+                            C&apos;est par ici que ça se passe :)
                         </Typography>
                         <Link align={'center'} href={'/search'}>Rechercher des recettes</Link>
                     </Stack>

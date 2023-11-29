@@ -29,7 +29,7 @@ export default async function Favourites() {
               favourites.length > 0 ?
               favourites.map((favourite) => {
                 return (
-                  <FavouriteRecipe recipe={favourite.recipe}></FavouriteRecipe>
+                  <FavouriteRecipe recipe={favourite.recipe} key={favourite.recipe.id}></FavouriteRecipe>
                 )
               }) :
               (<Typography align="center" color={'white'}>

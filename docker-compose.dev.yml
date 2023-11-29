@@ -28,7 +28,6 @@ services:
 
   # Add more containers below (nginx, postgres, etc.)
   cuisine-connect-db:
-    container_name: cuisine-connect-db
     build:
       context: .
       dockerfile: mongodb.dev.Dockerfile

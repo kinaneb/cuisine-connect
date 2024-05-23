@@ -48,7 +48,6 @@ Welcome to cuisine connect, an innovative Chef website powered by AI. With cuisi
 
     ```bash
     git clone https://github.com/kinaneb/cuisine-connect.git
-    cd cuisine-connect
     ```
 
 2.  **Set up environment variables**

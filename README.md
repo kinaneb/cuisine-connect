@@ -1,6 +1,6 @@
-# ChefAI - AI-Powered Recipe Website
+# cuisine connect - AI-Powered Recipe Website
 
-Welcome to ChefAI, an innovative Chef website powered by AI. With ChefAI, users can search for recipes based on ingredients, cuisine, preparation time, and more. The AI generates customized recipe suggestions from our database and learns from user interactions to provide an enhanced experience.
+Welcome to cuisine connect, an innovative Chef website powered by AI. With cuisine connect, users can search for recipes based on ingredients, cuisine, preparation time, and more. The AI generates customized recipe suggestions from our database and learns from user interactions to provide an enhanced experience.
 
 ## Table of Contents
 
@@ -47,8 +47,8 @@ Welcome to ChefAI, an innovative Chef website powered by AI. With ChefAI, users 
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/chefai.git
-    cd chefai
+    git clone https://github.com/kinaneb/cuisine-connect.git
+    cd cuisine-connect
     ```
 
 2.  **Set up environment variables**

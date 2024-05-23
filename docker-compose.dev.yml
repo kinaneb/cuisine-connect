@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   cuisine-connect:
@@ -10,16 +10,16 @@ services:
       dockerfile: dev.Dockerfile
 
     # Set environment variables directly in the docker-compose file
-#    environment:
-#      ENV_VARIABLE: ${ENV_VARIABLE}
-#      NEXT_PUBLIC_ENV_VARIABLE: ${NEXT_PUBLIC_ENV_VARIABLE}
+    #    environment:
+    #      ENV_VARIABLE: ${ENV_VARIABLE}
+    #      NEXT_PUBLIC_ENV_VARIABLE: ${NEXT_PUBLIC_ENV_VARIABLE}
 
     # Set envrionment variables based on the .env file
     env_file:
       - ./cuisine-connect/.env.local
     volumes:
       - ./cuisine-connect:/app
-#      - ./cuisine-connect/public:/app/public
+    #      - ./cuisine-connect/public:/app/public
     restart: always
     ports:
       - 3000:3000
@@ -33,8 +33,8 @@ services:
       dockerfile: mongodb.dev.Dockerfile
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_REPLICA_HOST: cuisine-connect-db
       MONGO_REPLICA_PORT: "27017"
     ports:
